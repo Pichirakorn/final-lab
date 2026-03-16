@@ -6,16 +6,16 @@ CREATE TABLE IF NOT EXISTS tasks (
               CHECK (status IN ('TODO','IN_PROGRESS','DONE')),
   priority    VARCHAR(10) DEFAULT 'medium'
               CHECK (priority IN ('low','medium','high')),
-  owner_id    VARCHAR(50) NOT NULL,     -- user_id จาก JWT
+  user_id    VARCHAR(50) NOT NULL,     -- user_id จาก JWT
   assignee_id VARCHAR(50),
   created_at  TIMESTAMP DEFAULT NOW(),
   updated_at  TIMESTAMP DEFAULT NOW()
 );
 
 -- ข้อมูลทดสอบ
-INSERT INTO tasks (title, description, status, priority, owner_id) VALUES
-  ('ออกแบบ Database Schema', 'วาด ERD สำหรับ Task Board', 'DONE', 'high', 'user-001'),
-  ('สร้าง Auth Service', 'Implement JWT login/register', 'IN_PROGRESS', 'high', 'user-001'),
-  ('เขียน Unit Tests', 'เพิ่ม test coverage ให้ถึง 80%', 'TODO', 'medium', 'user-002'),
-  ('ทำ Docker Setup', 'สร้าง docker-compose.yml', 'DONE', 'high', 'user-admin')
+INSERT INTO tasks (title, description, status, priority, user_id) VALUES
+  ('ออกแบบ Database Schema', 'วาด ERD สำหรับ Task Board', 'DONE', 'high', 1),
+  ('สร้าง Auth Service', 'Implement JWT login/register', 'IN_PROGRESS', 'high', 1),
+  ('เขียน Unit Tests', 'เพิ่ม test coverage ให้ถึง 80%', 'TODO', 'medium', 2),
+  ('ทำ Docker Setup', 'สร้าง docker-compose.yml', 'DONE', 'high', 3)
 ON CONFLICT DO NOTHING;
