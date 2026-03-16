@@ -217,3 +217,98 @@ alice    | $2a$10$JvC3kT9c5PpJrW8R3y6yQe9t7h...
 bob      | $2a$10$Yk8L2mQp9rD5sT7n4w...
 
 แฮกเกอร์จะเห็นแค่ hash ซึ่งไม่สามารถรู้รหัสผ่านจริงได้ง่าย ๆ
+
+# 7. วิธีทดสอบ API และ Frontend
+
+## Teat APT
+
+```
+# ── ตัวแปร ───────────────────────────────────
+BASE="https://localhost"    # ใช้ --insecure เพราะ self-signed cert
+
+# ── T3: Login ────────────────────────────────
+TOKEN=$(curl -sk -X POST $BASE/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"alice@lab.local","password":"alice123"}' | \
+  python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
+echo $TOKEN
+
+# ── T4: Login (ผิด password) ──────────────────
+curl -sk -X POST $BASE/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"alice@lab.local","password":"wrong"}'
+
+# ── T5: Create Task ───────────────────────────
+curl -sk -X POST $BASE/api/tasks/ \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Test task","description":"from curl","priority":"high"}'
+
+# ── T6: Get Tasks ─────────────────────────────
+curl -sk $BASE/api/tasks/ -H "Authorization: Bearer $TOKEN"
+
+# ── T9: No JWT → 401 ─────────────────────────
+curl -sk $BASE/api/tasks/
+
+# ── T10A: Member เรียก Log Dashboard ต้องถูกปฏิเสธ ─────────
+curl -sk -i $BASE/api/logs/ -H "Authorization: Bearer $TOKEN"
+
+# ── T10B: Admin เรียก Log Dashboard ได้สำเร็จ ───────────────
+ADMIN_TOKEN=$(curl -sk -X POST $BASE/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@lab.local","password":"adminpass"}' | \
+  python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
+
+curl -sk $BASE/api/logs/ -H "Authorization: Bearer $ADMIN_TOKEN"
+
+# ── T11: Rate Limit ───────────────────────────
+for i in {1..8}; do
+  echo -n "Attempt $i: "
+  curl -sk -o /dev/null -w "%{http_code}\n" -X POST $BASE/api/auth/login \
+    -H "Content-Type: application/json" \
+    -d '{"email":"alice@lab.local","password":"wrong"}'
+  sleep 0.1
+done
+```
+## Test Frontend 
+
+เปิด browser ไปที่
+```
+https://localhost
+```
+จากนั้น
+Login
+สร้าง Task
+ดูรายการ Task
+ลบ Task
+
+## 9. การทำงานของ HTTPS, JWT และ Logging
+
+HTTPS
+
+ระบบใช้ HTTPS เพื่อเข้ารหัสข้อมูลระหว่าง client และ server
+Nginx ทำหน้าที่เป็น reverse proxy และจัดการ TLS certificate
+
+JWT Authentication
+
+หลังจาก login สำเร็จ
+Auth Service จะสร้าง JWT token
+Token นี้จะถูกใช้ในการเรียก API อื่น ๆ
+```
+Authorization: Bearer TOKEN
+```
+Task Service และ Log Service จะตรวจสอบ token ก่อนให้เข้าถึงข้อมูล
+
+Logging
+Log Service จะบันทึกข้อมูล เช่น
+- login attempts
+- API requests
+- system errors
+ผู้ใช้ที่เป็น admin สามารถดู logs ได้ผ่าน API
+
+# 10. Known Limitations
+
+## ข้อจำกัดของระบบ
+- ยังไม่มีระบบ refresh token
+- frontend ยังเป็น version พื้นฐาน
+
