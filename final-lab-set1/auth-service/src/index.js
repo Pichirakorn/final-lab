@@ -51,7 +51,7 @@ async function start() {
     }
   }
 
-  app.listen(PORT, () => {
+  app.listen(PORT, '0.0.0.0',() => {
     console.log(`[auth-service] Running on port ${PORT}`);
     console.log(`[auth-service] JWT_EXPIRES: ${process.env.JWT_EXPIRES || '1h'}`);
   });

@@ -11,9 +11,11 @@ const pool = new Pool({
 });
 
 async function initDB() {
-  const sql = fs.readFileSync(path.join(__dirname, 'init.sql'), 'utf8');
+  const sql = fs.readFileSync(
+    path.join(__dirname, 'init.sql'), 'utf8'
+  );
   await pool.query(sql);
-  console.log('[task-db] Tables initialized');
+  console.log('[auth-db] Tables initialized');
 }
 
 module.exports = { pool, initDB };
